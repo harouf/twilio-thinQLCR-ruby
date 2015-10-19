@@ -3,15 +3,17 @@ require "twilio_thinqlcr_ruby/version"
 module TwilioThinqlcrRuby
   # The main twilio wrapper class that inegrates thinQ.
   class TwilioWrapper
-    TWIML_RESOURCE_URL = "http://cris.viralearnings.com/twiml/get_response"
 
-    attr_accessor :client, :customer_number, :twilio_account_sid, :twilio_account_token, :twilio_phone_number, :callback_type, :callback_details
+    THINQ_DOMAIN = "wap.thinq.com"
+    TWIML_RESOURCE_URL = "http://demo.twilio.com/docs/voice.xml"
 
-    def initialize(customer_number, twilio_account_sid, twilio_account_token, twilio_phone_number)
-      @customer_number = customer_number
+    attr_accessor :client, :twilio_account_sid, :twilio_account_token, :thinQ_id, :thinQ_token
+
+    def initialize(twilio_account_sid, twilio_account_token, thinQ_id, thinQ_token)
       @twilio_account_sid = twilio_account_sid
       @twilio_account_token = twilio_account_token
-      @twilio_phone_number = twilio_phone_number
+      @thinQ_id = thinQ_id
+      @thinQ_token = thinQ_token
 
       @client = Twilio::REST::Client.new twilio_account_sid, twilio_account_token
     end
@@ -20,15 +22,17 @@ module TwilioThinqlcrRuby
         !@client.nil? and !@client.account.nil?
     end
 
-    def call
+    def call(from, to)
         if !self.isClientValid?
           return "Invalid Twilio Account details."
         end
 
         begin
-          @call = @client.account.calls.create({:to => @customer_number,
-                                                :from => @twilio_phone_number,
-                                                :url => TWIML_RESOURCE_URL})
+          @call = @client.account.calls.create({:to => "sip:#{to}@#{THINQ_DOMAIN}",
+                                                :from => from,
+                                                :url => TWIML_RESOURCE_URL,
+                                                :thinQid => @thinQ_id,
+                                                :thinQtoken => @thinQ_token})
           return  @call.sid
         rescue Exception => e
           return e.message
